@@ -1,0 +1,76 @@
+idea:
+Ziel:   Fluent API
+        Best Practice RabbitMQ
+        do not hide RabbitMQ
+
+todo
+Consumer Cancellation
+
+
+
+Publish:
+    bunny.SendAsync<Msg>(msg).ToExchange().With(configure => 
+    {
+        configure.Headers();
+        configure.AsExpire();
+        configure.AsPersistent();
+        configure.ActivateConfirm();
+    })
+    .HandleConfirm(x => {})
+    .HandleSerialize(x => {})
+    .AsMandatory();
+
+    bunny.RequestAsync<Request, Response>().ToExchange()
+    .With(configure => 
+    {
+        // configure.TemporaryQueue();
+        configure.SeperateQueue();
+        //configure.ReplyQueue();
+    });
+
+    bunny.PublishAsync<Msg>(msg)... wie send nur ohne antowrt.
+
+Consume:
+
+    bunny.Consume<Msg>(async (carrot, msg) => 
+    {
+        carrot.ThrowNack(); // oder
+        carrot.SetAck();
+        return Task.CompletedTask();
+    })
+        .
+    
+    bunny.GetAsync<Msg>(async msg => Task.CompletedTask())
+        .
+
+Connect 
+    IBunny bunny = Bunny.Connect(uri / Parameters / Fluent);
+                    || Bunny.Connect().ToHost().ToPort().ToVirtualHost()
+                       .WithPlain(guest, guest)
+
+Direct Control:
+    bunny.Declare().Exchange("").Type().AsDurable(false);
+    bunny.Declare().Queue("").BindAs("").AsDurable(false)
+         .TTL()
+         .MaxLength()
+         .MaxLengthBytes()
+         .MaxLengthBytes()
+         .//later the rest
+    bunny.Exists("");
+
+    bunny.Channel
+
+
+Needs:
+    Logging
+    Scheduling
+    Serialization
+    Connection Pooling / Recovery
+    Polymorphes Messaging
+
+
+Connect
+Serialize
+Logging
+Consumer
+Publisher

@@ -1,8 +1,9 @@
+using System;
 using RabbitMQ.Client;
 
 namespace SharpBunny
 {
-    public interface IBunny
+    public interface IBunny : IDisposable
     {
         ///<summary>
         /// use only if absolutely necessary
