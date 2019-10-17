@@ -1,15 +1,15 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using SharpBunny.Exceptions;
 using SharpBunny.Utils;
+using System.Linq;
 
 [assembly: InternalsVisibleTo("tests")]
 namespace SharpBunny.Declare
 {
-    public class DeclareQueue : IDeclare
+    public class DeclareQueue : IQueue
     {
         private readonly IBunny _bunny;
         internal DeclareQueue(IBunny bunny, string name)
@@ -18,12 +18,10 @@ namespace SharpBunny.Declare
             _bunny = bunny;
         }
         internal string Name {get;}
-        internal int? Ttl { get; set; }
-        internal bool? Durable { get; set; } = true;
+        internal bool? Durable { get; set; } = false;
         internal (string ex, string rKey)? BindingKey { get; set; }
-        internal int? MaxBytes { get; set; }
-        internal int? MaxLength { get; set; }
         internal bool? AutoDelete { get; set; }
+        private readonly Dictionary<string, object> _arguments = new Dictionary<string, object>();
 
         public async Task DeclareAsync()
         {
@@ -42,7 +40,7 @@ namespace SharpBunny.Declare
             }
             catch (System.Exception exc)
             {
-                throw DeclarationException.DeclareFailed(exc);
+                throw DeclarationException.DeclareFailed(exc, "queue-declare failed");
             }
             finally
             {
@@ -52,13 +50,12 @@ namespace SharpBunny.Declare
 
         private Task Declare(IModel channel)
         {
-            var arguments = CreateArgs();
             return Task.Run(() => 
                     channel.QueueDeclare(Name,
                     durable: Durable.HasValue ? Durable.Value : true,
                     exclusive: false,
                     autoDelete: AutoDelete.HasValue ? AutoDelete.Value : false,
-                    arguments: arguments)
+                    arguments: _arguments.Any() ? _arguments : null)
                 );
         }
 
@@ -78,28 +75,62 @@ namespace SharpBunny.Declare
             }
         }
 
-        private Dictionary<string, object> CreateArgs()
+        public IQueue AsAutoDelete()
         {
-            var d = new Dictionary<string, object>();
+            AutoDelete = true;
+            return this;
+        }
 
-            if (Ttl.HasValue)
+        public IQueue Bind(string exchangeName, string routingKey)
+        {
+            if (exchangeName == null || string.IsNullOrWhiteSpace(routingKey))
             {
-                d.Add("x-message-ttl", Ttl.Value);
+                throw DeclarationException.Argument(new System.ArgumentException("exchangename must not be null and routingKey must not be Null, Empty or Whitespace"));
             }
-            if (MaxLength.HasValue)
-            {
-                d.Add("x-max-length", MaxLength.Value);
-            }
-            if (MaxBytes.HasValue)
-            {
-                d.Add("x-max-length-bytes", MaxBytes.Value);
-            }
-            if (MaxBytes.HasValue)
-            {
-                d.Add("x-max-length-bytes", MaxBytes.Value);
-            }
+            BindingKey = (exchangeName, routingKey);
+            return this;
+        }
 
-            return d.Any() ? d : null;
+        public IQueue AsDurable()
+        {
+            Durable = true;
+            return this;
+        }
+
+        public IQueue WithTTL(uint ttl)
+        {
+            _arguments.Add("x-message-ttl", (int)ttl);
+            return this;
+        }
+
+        public IQueue MaxLength(uint maxLength)
+        {
+            _arguments.Add("x-max-length", (int)maxLength);
+            return this;
+        }
+
+        public IQueue MaxBytes(uint maxBytes)
+        {
+            _arguments.Add("x-max-length-bytes", (int)maxBytes);
+            return this;
+        }
+
+        public IQueue Expire(uint expire)
+        {
+            _arguments.Add("x-expires", (int)expire);
+            return this;
+        }
+
+        public IQueue AsLazy()
+        {
+            _arguments.Add("x-queue-mode", "lazy");
+            return this;
+        }
+
+        public IQueue OverflowReject()
+        {
+            _arguments.Add("x-overflow", "reject-publish");
+            return this;
         }
     }
 }

@@ -60,8 +60,8 @@ Direct Control:
          .Expire()
          .//later the rest
     bunny.QueueExists("");
-    bunny.ExchangeExists("");
 
+    bunny.ExchangeExists("");
     bunny.Channel
 
 

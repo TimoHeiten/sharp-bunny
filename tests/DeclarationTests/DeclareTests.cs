@@ -59,14 +59,14 @@ namespace BunnyTests
                 name = name.PadRight(500, '-');
             }
             var @base = new DeclareQueue(ConnectSimple.Connect(), "queue");
-            Assert.Throws<DeclarationException>(() => @base.BindAs(name, ""));
+            Assert.Throws<DeclarationException>(() => @base.Bind(name, ""));
         }
 
         [Fact]
         public void BindAsSetsBindingKeyOn()
         {
             var @base = new DeclareQueue(ConnectSimple.Connect(), "queue");
-            @base.BindAs("ex", "bind-key");
+            @base.Bind("ex", "bind-key");
             Assert.Equal("bind-key", @base.BindingKey.HasValue ? @base.BindingKey.Value.rKey : "null");
         }
 
@@ -74,11 +74,12 @@ namespace BunnyTests
         public async Task DeclareAndBindDefaultAmqDirectSucceeds()
         {
             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
-            var declare = bunny.Declare().Queue("bind-test")
-                           .BindAs("amq.direct", "bind-test-key")
-                           .AsDurable()
-                           .WithTTL(500)
-                           .MaxLength(10);
+            var declare = bunny.Declare()
+                            .Queue("bind-test")
+                            .Bind("amq.direct", "bind-test-key")
+                            .AsDurable()
+                            .WithTTL(500)
+                            .MaxLength(10);
 
             await declare.DeclareAsync();
 

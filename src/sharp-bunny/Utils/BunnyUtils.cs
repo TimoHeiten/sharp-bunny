@@ -16,7 +16,26 @@ namespace SharpBunny.Utils
 
                 return true;
             }
-            catch (RabbitMQ.Client.Exceptions.OperationInterruptedException ex)
+            catch (RabbitMQ.Client.Exceptions.OperationInterruptedException)
+            {
+                return false;
+            }
+            catch (Exception ex)
+            {
+                throw DeclarationException.DeclareFailed(ex);
+            }
+        }
+
+        internal static async Task<bool> ExchangeExistsAsync(this IBunny bunny, string name)
+        {
+            try
+            {
+                var channel = bunny.Channel(newOne:true);
+                await Task.Run(() => channel.ExchangeDeclarePassive(name));
+
+                return true;
+            }
+            catch (RabbitMQ.Client.Exceptions.OperationInterruptedException)
             {
                 return false;
             }

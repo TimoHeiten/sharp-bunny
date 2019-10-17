@@ -30,9 +30,9 @@ namespace SharpBunny.Exceptions
 
         private DeclarationException(string msg, Exception inner): base(msg, inner){}
 
-        internal static DeclarationException DeclareFailed(Exception exception)
+        internal static DeclarationException DeclareFailed(Exception exception, string msg = "")
         {
-            return new DeclarationException("", exception);
+            return new DeclarationException(msg, exception);
         }
     }
 }
