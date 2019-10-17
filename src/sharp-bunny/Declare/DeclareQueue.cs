@@ -11,13 +11,13 @@ namespace SharpBunny.Declare
 {
     public class DeclareQueue : IQueue
     {
-        private readonly IBunny _bunny;
+        public IBunny Bunny { get; set; }
         internal DeclareQueue(IBunny bunny, string name)
         { 
             Name = name;
-            _bunny = bunny;
+            Bunny = bunny;
         }
-        internal string Name {get;}
+        public string Name {get;}
         internal bool? Durable { get; set; } = false;
         internal (string ex, string rKey)? BindingKey { get; set; }
         internal bool? AutoDelete { get; set; }
@@ -25,7 +25,7 @@ namespace SharpBunny.Declare
 
         public async Task DeclareAsync()
         {
-            bool exists = await _bunny.QueueExistsAsync(Name);
+            bool exists = await Bunny.QueueExistsAsync(Name);
             if (exists)
             {
                 return;
@@ -33,7 +33,7 @@ namespace SharpBunny.Declare
             IModel channel = null;
             try
             {
-                channel = _bunny.Channel();
+                channel = Bunny.Channel();
 
                 await Declare(channel);
                 await Bind(channel);
@@ -68,7 +68,7 @@ namespace SharpBunny.Declare
                 {
                     if (channel.IsClosed)
                     {
-                        channel = _bunny.Channel(newOne: true);
+                        channel = Bunny.Channel(newOne: true);
                     }
                     channel.QueueBind(Name, ex, bkey, null);
                 });

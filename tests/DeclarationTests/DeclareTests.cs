@@ -1,7 +1,6 @@
 using System;
 using Xunit;
 using SharpBunny;
-using System.Linq;
 using SharpBunny.Declare;
 using SharpBunny.Exceptions;
 using System.Threading.Tasks;
@@ -18,6 +17,8 @@ namespace BunnyTests
         }
         private class PurposeIsFail : IDeclare 
         {
+            public IBunny Bunny => throw new NotImplementedException();
+
             public Task DeclareAsync()
             {
                 throw new System.NotImplementedException();
@@ -78,6 +79,7 @@ namespace BunnyTests
                             .Queue("bind-test")
                             .Bind("amq.direct", "bind-test-key")
                             .AsDurable()
+                            .Expire(1500)
                             .WithTTL(500)
                             .MaxLength(10);
 

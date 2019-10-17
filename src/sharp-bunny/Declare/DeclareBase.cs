@@ -8,7 +8,7 @@ namespace SharpBunny.Declare
     ///</summary>
     public class DeclareBase : IDeclare
     {
-        internal IBunny Bunny { get; set; }
+        public IBunny Bunny { get; set; }
         public Task DeclareAsync()
         {
             throw DeclarationException.BaseNotValid();

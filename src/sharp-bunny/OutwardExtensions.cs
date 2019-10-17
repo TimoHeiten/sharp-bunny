@@ -18,6 +18,9 @@ namespace SharpBunny
             return null;
         }
 
+        ///<summary>
+        /// Interface for building Queues, Exchanges, Bindings and so on
+        ///</summary>
         public static IDeclare Declare(this IBunny bunny)
         {
             return new DeclareBase() { Bunny = bunny };
