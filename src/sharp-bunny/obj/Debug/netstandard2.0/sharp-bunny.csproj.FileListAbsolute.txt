@@ -1,9 +1,0 @@
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/bin/Debug/netstandard2.0/sharp-bunny.deps.json
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/bin/Debug/netstandard2.0/sharp-bunny.dll
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/bin/Debug/netstandard2.0/sharp-bunny.pdb
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/obj/Debug/netstandard2.0/sharp-bunny.csprojAssemblyReference.cache
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/obj/Debug/netstandard2.0/sharp-bunny.csproj.CoreCompileInputs.cache
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/obj/Debug/netstandard2.0/sharp-bunny.AssemblyInfoInputs.cache
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/obj/Debug/netstandard2.0/sharp-bunny.AssemblyInfo.cs
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/obj/Debug/netstandard2.0/sharp-bunny.dll
-/Users/timoheiten/OneDrive/sharp-bunny/src/sharp-bunny/obj/Debug/netstandard2.0/sharp-bunny.pdb
