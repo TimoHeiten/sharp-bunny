@@ -9,6 +9,7 @@ namespace SharpBunny
         /// use only if absolutely necessary
         /// always a new Channel from RabbitMQ.Client and the current Connection
         ///</summary>
-        IModel Channel { get; }
+        IModel Channel(bool newOne=false);
+        IConnection Connection { get; }
     }
 }

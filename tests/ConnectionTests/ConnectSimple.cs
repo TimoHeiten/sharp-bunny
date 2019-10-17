@@ -1,5 +1,5 @@
-using System;
 using Xunit;
+using System;
 using System.Linq;
 using SharpBunny;
 
@@ -7,16 +7,16 @@ namespace BunnyTests
 {
     public class ConnectSimple
     {
-        public ConnectSimple()
-        {
+        private static readonly string _virtualHost = "unittests";
 
-        }
+        internal static IBunny Connect()
+            => Bunny.ConnectSingle(BasicAmqp);
+        internal static string BasicAmqp => $"amqp://guest:guest@localhost:5672/{_virtualHost}";
 
         [Fact]
         public void ConnectToSingleNodeViaAmqp()
         {
-            IBunny bunny = Bunny.ConnectSingle("amqp://guest:guest@localhost:5672/%2F");
-
+            IBunny bunny = Bunny.ConnectSingle(BasicAmqp);
             Assert.NotNull(bunny);
         }
 
@@ -31,10 +31,24 @@ namespace BunnyTests
         }
 
         [Fact]
+        public void ConfigurePipeWorks()
+        {
+            var pipe = Bunny.ConnectSingleWith();
+            pipe.ToHost("localhost")
+                .ToVirtualHost("unittests")
+                .ToPort(5672)
+                .AuthenticatePlain("guest", "guest");
+
+            IBunny bunny = pipe.Connect();
+
+            Assert.NotNull(bunny);
+        }
+
+        [Fact]
         public void ConnectMultipleFailsFirstConnectsSecond()
         {
-            string node1 = "amqp://guest:guest@localhost:5673/%2F";
-            string node2 = "amqp://guest:guest@localhost:5672/%2F";
+            string node1 = $"amqp://guest:guest@localhost:5673/{_virtualHost}";
+            string node2 = $"amqp://guest:guest@localhost:5672/{_virtualHost}";
 
             var multi = Bunny.ClusterConnect();
             multi.AddNode(node1);
@@ -43,6 +57,17 @@ namespace BunnyTests
             IBunny bunny = multi.Connect();
 
             Assert.NotNull(bunny);
+        }
+
+        [Fact]
+        public void ReconnectWithCluster()
+        {
+            // TODO
+            // start cluster
+            // connect with all nodes
+            // remove one node
+            // still connected (reconnected)
+            //  --> to other node --> check channel, connection etc.
         }
     }
 }

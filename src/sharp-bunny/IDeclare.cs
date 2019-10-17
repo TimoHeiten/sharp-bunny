@@ -1,9 +1,9 @@
-using System;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace SharpBunny
 {
     public interface IDeclare
     {
+        Task DeclareAsync();
     }
 }

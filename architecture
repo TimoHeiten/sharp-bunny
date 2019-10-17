@@ -55,8 +55,12 @@ Direct Control:
          .MaxLength()
          .MaxLengthBytes()
          .MaxLengthBytes()
+         .OnOverflow()
+         .AsLazy()
+         .Expire()
          .//later the rest
-    bunny.Exists("");
+    bunny.QueueExists("");
+    bunny.ExchangeExists("");
 
     bunny.Channel
 

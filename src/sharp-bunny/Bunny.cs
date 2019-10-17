@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
@@ -38,7 +37,7 @@ namespace SharpBunny
 
         public static IConnector ClusterConnect()
         {
-            return new Connector();
+            return new Cnnctr();
         }
 
         private static IBunny Connect(IFormattable formattable)
@@ -52,7 +51,7 @@ namespace SharpBunny
             {
                 try
                 {
-                    return new Facade.Bunny(factory.CreateConnection());
+                    return new Facade.Bunny(factory);
                 }
                 catch
                 {
@@ -61,35 +60,6 @@ namespace SharpBunny
                 }
             }
             throw new BrokerUnreachableException(new InvalidOperationException($"cannot find any broker at {amqp}"));
-
         }
-    }
-
-    
-
-    public class ConnectionParameters : IFormattable
-    {
-        public string Host { get; set; }
-        public uint Port { get; set; }
-        public string  User { get; set; }
-        public string Password { get; set; }
-        private string vHost;
-        public string VirtualHost 
-        {
-             get
-             {
-                 return vHost == "/" ? "%2F" : vHost;
-             }
-             set
-             {
-                 vHost = value;
-             }
-        }
-
-        public string ToString(string format, IFormatProvider formatProvider)
-        {
-
-            return $"amqp://{User}:{Password}@{Host}:{Port}/{VirtualHost}";
-        }
-    }
+    }   
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using SharpBunny.Declare;
 
 namespace SharpBunny
 {
@@ -19,7 +20,7 @@ namespace SharpBunny
 
         public static IDeclare Declare(this IBunny bunny)
         {
-            return null;
+            return new DeclareBase() { Bunny = bunny };
         }
     }
 }

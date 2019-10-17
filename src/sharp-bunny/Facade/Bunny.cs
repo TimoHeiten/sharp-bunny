@@ -1,20 +1,59 @@
+using System.Collections.Generic;
+using System.Linq;
 using RabbitMQ.Client;
 
 namespace SharpBunny.Facade
 {
     public class Bunny : IBunny
     {
-        private readonly IConnection _connection;
-        public Bunny(IConnection connection)
+        private readonly ConnectionFactory _factory;
+        private IConnection _connection;
+        private readonly List<IModel> _model = new List<IModel>();
+        public Bunny(ConnectionFactory fac)
         {
-            _connection = connection;
+            _connection = fac.CreateConnection();;
+            _factory = fac;
         }
 
-        public IModel Channel => _connection.CreateModel();
+        public IModel Channel(bool newOne = false)
+        {
+            var open = _model.Where(x => x.IsOpen).ToList();
+            _model.Clear();
+            _model.AddRange(open);
+            if (_model.Any() == false || newOne)
+            {
+                if (_connection.IsOpen == false)
+                {
+                    _connection = _factory.CreateConnection();
+                }
+                var model = _connection.CreateModel();
+                _model.Add(model);
+                return model;
+            }
+            else
+            {
+                return _model.Last();
+            }
+        }
+
+        public IConnection Connection
+        {
+            get
+            {
+                if (_connection.IsOpen)
+                    return _connection;
+                else
+                    return _factory.CreateConnection();
+            }
+        }
 
         public void Dispose()
         {
-            throw new System.NotImplementedException();
+            if (_connection.IsOpen)
+            {
+                _model.ForEach(x => x.Dispose());
+                _connection.Close();
+            }
         }
     }
 }
