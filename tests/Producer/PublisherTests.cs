@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BunnyTests;
 using RabbitMQ.Client.Events;
@@ -91,13 +92,14 @@ namespace tests
             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
 
             bool isReturned = false;
-            var publisher = bunny.Publisher<object>("amq.direct");
+            var publisher = bunny.Publisher<TestMessage>("amq.direct");
             Func<BasicReturnEventArgs, Task> nacker = ea => { isReturned= true; return Task.CompletedTask; };
 
             await publisher.AsMandatory(nacker)
                            .WithRoutingKey("not-any-bound-queue")
-                           .SendAsync(new object());
+                           .SendAsync(new TestMessage());
 
+            await Task.Delay(500);
             Assert.True(isReturned);
             bunny.Dispose();
         }
@@ -105,7 +107,7 @@ namespace tests
         [Fact]
         public async Task MandatoryWorksWithQueue()
         {
-             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
+            IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
 
             bool isReturned = true;
             var publisher = bunny.Publisher<TestMessage>("amq.direct");
@@ -115,10 +117,51 @@ namespace tests
                            .WithQueueDeclare()
                            .SendAsync(new TestMessage(){Text = "Mandatory-succeeds"});
 
-            bool removed = await bunny.Setup().DeleteQueueAsync(typeof(TestMessage).FullName);
+            bool removed = await bunny.Setup().DeleteQueueAsync(typeof(TestMessage).FullName, force:true);
 
             Assert.True(isReturned);
             bunny.Dispose();
+        }
+
+        [Fact]
+        public async Task MultiplePublishOnSinglePublisher()
+        {
+            IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
+            var publisher = bunny.Publisher<TestMessage>("amq.direct");
+
+            string queueName = "polymorph-queue";
+            await publisher.WithQueueDeclare(queueName, "poly")
+                           .SendAsync(new OtherMessage());
+            await publisher.SendAsync(new YetAnotherMessage());
+            await Task.Delay(150);
+            uint count = bunny.Channel().MessageCount(queueName);
+
+            Assert.Equal(2, (int)count);
+            await bunny.Setup().DeleteQueueAsync(queueName, force:true);
+        }
+
+        [Fact]
+        public async Task OverWriteRoutingKeySendsToDifferentQueuesEachTime()
+        {
+            IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
+            var publisher = bunny.Publisher<TestMessage>("amq.direct");
+
+            string queueName = "polymorph-queue-other";
+            string queueNameYetOther = "polymorph-queue-yet-another";
+            await publisher.WithQueueDeclare(queueName, "poly")
+                           .SendAsync(new OtherMessage());
+            await publisher.WithQueueDeclare(queueNameYetOther, "poly-2")
+                           .WithRoutingKey("poly-2")
+                           .SendAsync(new YetAnotherMessage());
+
+            uint otherCount = bunny.Channel().MessageCount(queueName);
+            uint yetOtherCount = bunny.Channel().MessageCount(queueNameYetOther);
+
+            Assert.Equal(1, (int)otherCount);
+            Assert.Equal(1, (int)yetOtherCount);
+
+            await bunny.Setup().DeleteQueueAsync(queueName, force:true);
+            await bunny.Setup().DeleteQueueAsync(queueNameYetOther, force:true);
         }
 
         public class TestMessage 
@@ -126,5 +169,10 @@ namespace tests
             public string Text { get; set; } = "Test";
             public int Number { get; set; } = 42;
         }
+
+        public class OtherMessage : TestMessage
+        {} 
+        public class YetAnotherMessage : OtherMessage 
+        {}
     }
 }

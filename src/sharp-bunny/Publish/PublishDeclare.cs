@@ -6,14 +6,14 @@ using SharpBunny.Connect;
 
 namespace SharpBunny.Publish
 {
-    public class PublishDeclare<T> : IPublish<T>
+    public class DeclarePublisher<T> : IPublish<T>
         where T : class
     {
         private readonly IBunny _bunny;
         private Func<T, byte[]> _serialize;
         private readonly PermanentChannel _thisChannel;
         private readonly string _publishTo;
-        public PublishDeclare(IBunny bunny, string publishTo)
+        public DeclarePublisher(IBunny bunny, string publishTo)
         {
             _bunny = bunny;
             _publishTo = publishTo;

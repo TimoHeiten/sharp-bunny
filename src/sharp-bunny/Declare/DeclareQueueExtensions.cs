@@ -38,7 +38,6 @@ namespace SharpBunny
             IBunny bunny = CheckGetBunny(declare, queue, "queue");
             return bunny.QueueExistsAsync(queue);
         }
-
         #endregion
 
         #region Exchange

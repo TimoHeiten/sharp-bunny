@@ -8,7 +8,7 @@ namespace SharpBunny
         public static IPublish<TMsg> Publisher<TMsg>(this IBunny bunny, string publishToExchange)
             where TMsg : class
         {
-            return new PublishDeclare<TMsg>(bunny, publishToExchange);
+            return new DeclarePublisher<TMsg>(bunny, publishToExchange);
         }
 
         public static IConsume Consume<TMsg>(this IBunny bunny)

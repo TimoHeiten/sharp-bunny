@@ -17,7 +17,7 @@ namespace SharpBunny.Declare
             Name = name;
             Bunny = bunny;
         }
-        public string Name {get;}
+        public string Name { get; }
         internal bool? Durable { get; set; } = false;
         internal (string ex, string rKey)? BindingKey { get; set; }
         public string RoutingKey 

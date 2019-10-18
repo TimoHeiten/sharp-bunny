@@ -1,6 +1,4 @@
 using Xunit;
-using System;
-using System.Linq;
 using SharpBunny;
 
 namespace BunnyTests
