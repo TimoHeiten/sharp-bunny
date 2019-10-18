@@ -13,7 +13,7 @@ namespace tests
         public async Task DeclareAndDeleteQueueNotExistsAfterWards()
         {
             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
-            IQueue declare = bunny.Declare()
+            IQueue declare = bunny.Setup()
                             .Queue("to-delete");
 
             await declare.DeclareAsync();
@@ -28,7 +28,7 @@ namespace tests
         public async Task DeclareAndDeleteExchangeNotExistsAfterWards()
         {
             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
-            IExchange declare = bunny.Declare()
+            IExchange declare = bunny.Setup()
                             .Exchange("to-delete-ex", "fanout");
 
             await declare.DeclareAsync();

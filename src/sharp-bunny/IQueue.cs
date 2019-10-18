@@ -5,6 +5,10 @@ namespace SharpBunny
 {
     public interface IQueue : IDeclare
     {
+        ///<summary>
+        /// Defaults to Queue.Name
+        ///</summary>
+        string RoutingKey { get; }
         string Name { get; }
         ///<summary>
         /// the Queue will be dismantled if the last Channel has disconnected
@@ -30,8 +34,17 @@ namespace SharpBunny
         /// The Queue allows for a maximum of [maxBytes] messges
         ///</summary>
         IQueue MaxBytes(uint maxBytes);
+        ///<summary>
+        /// The Queue disappears after [expire], when it is not used in between
+        ///</summary>
         IQueue Expire(uint expire);
+        ///<summary>
+        /// Lazy Mode on Queues enables a sort of throttling. Use Carefully because it slows down performance
+        ///</summary>
         IQueue AsLazy();
+        ///<summary>
+        /// Sets the overflow behavior from drop-head (default) to reject-publish
+        ///</summary>
         IQueue OverflowReject();
     }
 }

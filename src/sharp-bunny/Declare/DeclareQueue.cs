@@ -20,6 +20,16 @@ namespace SharpBunny.Declare
         public string Name {get;}
         internal bool? Durable { get; set; } = false;
         internal (string ex, string rKey)? BindingKey { get; set; }
+        public string RoutingKey 
+        {
+            get
+            {
+                if (BindingKey.HasValue)
+                    return BindingKey.Value.rKey;
+                else
+                    return Name;
+            }
+        }
         internal bool? AutoDelete { get; set; }
         private readonly Dictionary<string, object> _arguments = new Dictionary<string, object>();
 
@@ -33,7 +43,7 @@ namespace SharpBunny.Declare
             IModel channel = null;
             try
             {
-                channel = Bunny.Channel();
+                channel = Bunny.Channel(newOne:true);
 
                 await Declare(channel);
                 await Bind(channel);

@@ -54,12 +54,26 @@ namespace SharpBunny.Facade
                 SetConnected();
                 return _connection;
             }
-        } 
+        }
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                   if (_connection.IsOpen)
+                        _connection.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
         public void Dispose()
         {
-            if (_connection.IsOpen)
-                _connection.Dispose();
+            Dispose(true);
         }
+        #endregion
     }
 }

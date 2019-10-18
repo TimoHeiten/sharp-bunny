@@ -52,7 +52,7 @@ namespace SharpBunny.Declare
             IModel channel = null;
             try
             {
-                channel = _bunny.Channel();
+                channel = _bunny.Channel(newOne:true);
 
                 await Task.Run(() => 
                 {

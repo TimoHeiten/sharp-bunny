@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
+using SharpBunny.Connect;
 using SharpBunny.Exceptions;
 
 namespace SharpBunny.Utils
@@ -43,7 +44,9 @@ namespace SharpBunny.Utils
             {
                 throw DeclarationException.DeclareFailed(ex);
             }
-
         }
+
+        internal static PermanentChannel ToPermanentChannel(this IBunny bunny)
+            => new PermanentChannel(bunny);
     }
 }

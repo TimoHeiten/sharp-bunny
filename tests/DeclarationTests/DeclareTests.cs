@@ -75,7 +75,7 @@ namespace BunnyTests
         public async Task DeclareAndBindDefaultAmqDirectSucceeds()
         {
             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
-            var declare = bunny.Declare()
+            var declare = bunny.Setup()
                             .Queue("bind-test")
                             .Bind("amq.direct", "bind-test-key")
                             .AsDurable()
