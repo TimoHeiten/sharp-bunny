@@ -95,6 +95,9 @@ namespace SharpBunny.Consume
 
                     int rnd = new Random().Next(0, 999);
                     string consumerTag = typeof(TMsg)+"-"+_consumeFromQueue+"-"+rnd;
+                    int prefetchSize = 0; // means --> no specific limit
+                    bool applyToConnection = false;
+                    channel.BasicQos((uint)prefetchSize, (ushort)_prefetchCount, applyToConnection);
                     channel.BasicConsume(_consumeFromQueue, 
                                         _autoAck, 
                                         consumerTag,
