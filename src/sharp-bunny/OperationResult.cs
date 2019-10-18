@@ -6,6 +6,19 @@ namespace SharpBunny
     {
         public bool IsSuccess { get; internal set; }
         public T Message { get; internal set; }
-        public Exception Error { get; set; }
+        public Exception Error { get; internal set; }
+
+        public OperationState  State {get; internal set;}
+    }
+
+    public enum OperationState
+    {
+        Failed = 1,
+        ConsumerAttached = 2,
+        Published = 3,
+        Get = 4,
+        Acked = 5,
+        Nacked = 6,
+        GetFailed = 7,
     }
 }

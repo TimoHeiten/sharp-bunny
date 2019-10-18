@@ -1,3 +1,4 @@
+using SharpBunny.Consume;
 using SharpBunny.Declare;
 using SharpBunny.Publish;
 
@@ -11,9 +12,13 @@ namespace SharpBunny
             return new DeclarePublisher<TMsg>(bunny, publishToExchange);
         }
 
-        public static IConsume Consume<TMsg>(this IBunny bunny)
+        public static IConsume<TMsg> Consumer<TMsg>(this IBunny bunny, string fromQueue = null)
         {
-            return null;
+            if (fromQueue == null)
+            {
+                fromQueue = typeof(TMsg).FullName;
+            }
+            return new DeclareConsumer<TMsg>(bunny, fromQueue);
         }
 
         public static IRequest Request<TRequest, TResponse>(this IBunny bunny, TRequest msg)

@@ -129,6 +129,7 @@ namespace SharpBunny.Publish
             {
                 operationResult.IsSuccess = false;
                 operationResult.Error = ex;
+                operationResult.State = OperationState.Failed;
             }
             finally
             {
