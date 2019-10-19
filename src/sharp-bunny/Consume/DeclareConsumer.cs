@@ -8,10 +8,10 @@ namespace SharpBunny.Consume
     public class DeclareConsumer<TMsg> : IConsume<TMsg>
     {
         private readonly IBunny _bunny;
-        private readonly string _consumeFromQueue;
         private  readonly PermanentChannel _thisChannel;
 
         #region mutable fields
+        private string _consumeFromQueue;
         private EventingBasicConsumer _consumer;
         private bool _useUniqueChannel;
         private Func<ICarrot<TMsg>, Task> _receive;
@@ -54,7 +54,7 @@ namespace SharpBunny.Consume
                     if (result != null)
                     {
                         var msg = _deserialize(result.Body);
-                        var carrot = new Carrot(msg, result.DeliveryTag, _thisChannel);
+                        var carrot = new Carrot<TMsg>(msg, result.DeliveryTag, _thisChannel);
                         await handle(carrot);
                         operationResult.IsSuccess = true;
                         operationResult.State = OperationState.Get;
@@ -81,7 +81,7 @@ namespace SharpBunny.Consume
             return this;
         }
 
-        public OperationResult<TMsg> StartConsuming()
+        public async Task<OperationResult<TMsg>> StartConsumingAsync(IQueue force = null)
         {
             var result = new OperationResult<TMsg>();
             if (_consumer == null)
@@ -89,21 +89,26 @@ namespace SharpBunny.Consume
                 try
                 {
                     var channel = _thisChannel.Channel;
+                    if (force != null)
+                    {
+                        await force.DeclareAsync();
+                        _consumeFromQueue = force.Name;
+                    }
+
+                    int prefetchSize = 0; // means --> no specific limit
+                    bool applyToConnection = false;
+                    channel.BasicQos((uint)prefetchSize, (ushort)_prefetchCount, applyToConnection);
+
                     _consumer = new EventingBasicConsumer(channel);
                     _consumer.ConsumerTag = Guid.NewGuid().ToString();
                     _consumer.Received += HandleReceived;
 
-                    int rnd = new Random().Next(0, 999);
-                    string consumerTag = typeof(TMsg)+"-"+_consumeFromQueue+"-"+rnd;
-                    int prefetchSize = 0; // means --> no specific limit
-                    bool applyToConnection = false;
-                    channel.BasicQos((uint)prefetchSize, (ushort)_prefetchCount, applyToConnection);
                     channel.BasicConsume(_consumeFromQueue, 
                                         _autoAck, 
-                                        consumerTag,
-                                        noLocal:false, 
-                                        exclusive:false, 
-                                        arguments:null,
+                                        _consumer.ConsumerTag,
+                                        noLocal: false, 
+                                        exclusive: false, 
+                                        arguments: null,
                                         consumer: _consumer);
                  
                     result.State = OperationState.ConsumerAttached;
@@ -128,11 +133,14 @@ namespace SharpBunny.Consume
 
         private async void HandleReceived(object channel, BasicDeliverEventArgs deliverd)
         {
-            Carrot carrot = null;
+            Carrot<TMsg> carrot = null;
             try
             {
                 TMsg message = _deserialize(deliverd.Body);
-                carrot = new Carrot(message, deliverd.DeliveryTag, _thisChannel);
+                carrot = new Carrot<TMsg>(message, deliverd.DeliveryTag, _thisChannel)
+                {
+                    MessageProperties = deliverd.BasicProperties
+                };
 
                 await _receive(carrot);
             }
@@ -188,63 +196,5 @@ namespace SharpBunny.Consume
             return Task.CompletedTask;
         }
         #endregion
-
-        private class Carrot : ICarrot<TMsg>
-        {
-            private readonly TMsg _message;
-            private ulong _deilvered;
-            private PermanentChannel _thisChannel;
-            
-
-            public Carrot(TMsg message, ulong deilvered, PermanentChannel thisChannel)
-            {
-                _message = message;
-                _deilvered = deilvered;
-                _thisChannel = thisChannel;
-            }
-
-            public TMsg Message => _message;
-
-            public async Task<OperationResult<TMsg>> SendAckAsync()
-            {
-                var result = new OperationResult<TMsg>();
-                try
-                {
-                    await Task.Run(() => _thisChannel.Channel.BasicAck(_deilvered, multiple:false));
-                    result.IsSuccess = true;
-                    result.State = OperationState.Acked;
-                    return result;
-                }
-                catch (System.Exception ex)
-                {
-                    result.IsSuccess = false;
-                    result.Error = ex;
-                    result.State = OperationState.Failed;
-                    System.Console.WriteLine(ex);
-                }
-
-                return result;
-            }
-
-            public async Task<OperationResult<TMsg>> SendNackAsync(bool withRequeue = true)
-            {
-                var result = new OperationResult<TMsg>();
-                try
-                {
-                    await Task.Run(() => _thisChannel.Channel.BasicReject(_deilvered, requeue:withRequeue));
-                    result.IsSuccess = true;
-                    result.State = OperationState.Nacked;
-
-                    return result;
-                }
-                catch (System.Exception ex)
-                {
-                    result.IsSuccess = false;
-                    result.Error = ex;
-                    result.State = OperationState.Failed;
-                }
-                return result;
-            }
-        }
     }
 }

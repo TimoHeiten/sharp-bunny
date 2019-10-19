@@ -21,7 +21,11 @@ namespace SharpBunny
         IConsume<TMsg> AsAutoAck(bool autoAck = true);
         IConsume<TMsg> DeserializeMessage(Func<byte[], TMsg> deserialize);
 
-        OperationResult<TMsg> StartConsuming();
+        ///<summary>
+        /// Starts consuming from the specified or forceDeclared Queue
+        /// force: creates the queue to be consumed from
+        ///</summary>
+        Task<OperationResult<TMsg>> StartConsumingAsync(IQueue force = null);
         ///<summary>
         /// leave out the carrot.SendAckAsync if you use AutoAck!
         ///</summary>
@@ -33,6 +37,7 @@ namespace SharpBunny
     public interface ICarrot<TMsg>
     {
         TMsg Message { get; }
+        IBasicProperties MessageProperties { get; }
         Task<OperationResult<TMsg>> SendAckAsync();
         Task<OperationResult<TMsg>> SendNackAsync(bool withRequeue = true);
     }

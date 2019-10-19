@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using RabbitMQ.Client;
 using SharpBunny.Utils;
@@ -37,7 +36,7 @@ namespace SharpBunny.Connect
 
         public IConnector WithRetry(int retry = 5, int timeout = 2)
         {
-            throw new NotSupportedException();
+            return this;
         }
     }
 }

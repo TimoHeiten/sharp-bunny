@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using SharpBunny.Consume;
 using SharpBunny.Declare;
 using SharpBunny.Publish;
@@ -21,15 +23,27 @@ namespace SharpBunny
             return new DeclareConsumer<TMsg>(bunny, fromQueue);
         }
 
-        public static IRequest Request<TRequest, TResponse>(this IBunny bunny, TRequest msg)
+        public static IRequest<TRequest, TResponse> Request<TRequest, TResponse>(this IBunny bunny, string rpcExchange, string routingKey = null)
             where TRequest : class
+            where TResponse : class
         {
-            return null;
+            if (routingKey == null)
+            {
+                routingKey = typeof(TRequest).FullName;
+            }
+            return new DeclareRequest<TRequest, TResponse>(bunny, rpcExchange, routingKey);
         }
 
-        public static IRespond Respond<TRequest, TResponse>(this IBunny bunny)
+        public static IRespond<TRequest, TResponse> Respond<TRequest, TResponse>(this IBunny bunny, string rpcExchange
+            , Func<TRequest, Task<TResponse>> respond, string fromQueue = null)
+        where TRequest : class
+        where TResponse : class
         {
-            return null;
+            if (fromQueue == null)
+            {
+                fromQueue = typeof(TRequest).FullName;
+            }
+            return new DeclareResponder<TRequest, TResponse>(bunny, rpcExchange, fromQueue, respond);
         }
 
         ///<summary>

@@ -17,9 +17,9 @@ namespace tests
         const string nackReQueue = "nack-requeue";
 
         [Fact]
-        public void ConsumerAttachReturnsOperationResult()
+        public async Task ConsumerAttachReturnsOperationResult()
         {
-            ConsumeGeneric(async carrot => 
+            await ConsumeGeneric(async carrot => 
             {
                 var result = carrot.Message;
                 var opResult = await carrot.SendAckAsync();
@@ -30,12 +30,12 @@ namespace tests
             });
         }
 
-        private IBunny ConsumeGeneric(Func<ICarrot<ConsumeMessage>, Task> carrot, string toQueue = queue)
+        private async Task<IBunny> ConsumeGeneric(Func<ICarrot<ConsumeMessage>, Task> carrot, string toQueue = queue)
         {
             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
 
             var consumer = bunny.Consumer<ConsumeMessage>(toQueue).Callback(carrot);
-            var operationResult = consumer.StartConsuming();
+            var operationResult = await consumer.StartConsumingAsync();
 
             Assert.True(operationResult.IsSuccess);
             Assert.Equal(OperationState.ConsumerAttached, operationResult.State);
@@ -57,7 +57,7 @@ namespace tests
         }
 
         [Fact]
-        public void MultipleCallToConsumeAlwaysReturnUccess()
+        public async Task MultipleCallToConsumeAlwaysReturnUccess()
         {
             IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
 
@@ -70,13 +70,31 @@ namespace tests
                 Assert.NotNull(result);
                 Assert.Equal(nameof(ConsumeMessage), result.MyText);
             });
-            var result1 = consumer.StartConsuming();
-            var result2 = consumer.StartConsuming();
-            var result3 = consumer.StartConsuming();
+            var result1 = await consumer.StartConsumingAsync();
+            var result2 = await consumer.StartConsumingAsync();
+            var result3 = await consumer.StartConsumingAsync();
 
             Assert.Equal(result1, result2, new EqualityOpResult());
             Assert.Equal(result1, result3, new EqualityOpResult());
             Assert.Equal(result2, result2, new EqualityOpResult());
+        }
+
+        [Fact]
+        public async Task StartConsumingAsyncWithForceDeclaresTheQueue()
+        {
+            IBunny bunny = Bunny.ConnectSingle(ConnectSimple.BasicAmqp);
+
+            var before = await bunny.Setup().QueueExistsAsync("force-declared");
+            var queue = bunny.Setup().Queue("force-declared");
+            var consumer = await bunny.Consumer<ConsumeMessage>()
+                                .StartConsumingAsync(queue);
+
+            var after = await bunny.Setup().QueueExistsAsync("force-declared");
+            Assert.False(before);
+            Assert.True(after);
+
+            var deleted = await bunny.Setup().DeleteQueueAsync("force-declared", force: true);
+            Assert.True(deleted);
         }
 
         private class EqualityOpResult : IEqualityComparer<OperationResult<ConsumeMessage>>
@@ -110,9 +128,9 @@ namespace tests
         }
 
         [Fact]
-        public void NackNoRequeue()
+        public async Task NackNoRequeue()
         {
-            var bunny = ConsumeGeneric(async carrot => 
+            var bunny = await ConsumeGeneric(async carrot => 
             {
                 var result = await carrot.SendNackAsync(false);
                 Assert.Equal(OperationState.Nacked, result.State);
@@ -145,9 +163,6 @@ namespace tests
             Assert.Equal(OperationState.Get, opResult.State);
             Assert.NotNull(opResult.Message.MyText);
         }
-
-        // get
-        // simulate exceptions‚
 
         public class ConsumeMessage
         {

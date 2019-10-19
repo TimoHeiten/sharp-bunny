@@ -20,5 +20,10 @@ namespace SharpBunny
         Acked = 5,
         Nacked = 6,
         GetFailed = 7,
+        RequestFailed = 8,
+        ResponseFailed = 9,
+        RpcSucceeded = 10,
+        Response = 11,
+        RpcReplyFailed = 12
     }
 }

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using SharpBunny.Connect;
+using SharpBunny.Exceptions;
 
 namespace SharpBunny.Publish
 {
@@ -13,7 +14,7 @@ namespace SharpBunny.Publish
         private Func<T, byte[]> _serialize;
         private readonly PermanentChannel _thisChannel;
         private readonly string _publishTo;
-        public DeclarePublisher(IBunny bunny, string publishTo)
+        internal DeclarePublisher(IBunny bunny, string publishTo)
         {
             _bunny = bunny;
             _publishTo = publishTo;
@@ -64,6 +65,10 @@ namespace SharpBunny.Publish
 
         public IPublish<T> WithConfirm(Func<BasicAckEventArgs, Task> onAck, Func<BasicNackEventArgs, Task> onNack)
         {
+            if (onAck == null || onNack == null )
+            {
+                throw DeclarationException.Argument(new ArgumentException("handlers for ack and nack must not be null"));
+            }
             _useConfirm = true;
             _ackCallback = onAck;
             _nackCallback = onNack;
@@ -97,7 +102,7 @@ namespace SharpBunny.Publish
             {
                 channel = _thisChannel.Channel;
 
-                var properties = ConstructProperties(channel.CreateBasicProperties());
+                var properties = ConstructProperties(channel.CreateBasicProperties(), Persistent, this.Expires);
                 Handlers(channel);
 
                 if (_queueDeclare != null)
@@ -191,14 +196,15 @@ namespace SharpBunny.Publish
             await _nackCallback(eventArgs);
         }
 
-        protected virtual IBasicProperties ConstructProperties(IBasicProperties basicProperties)
+        public static IBasicProperties ConstructProperties(IBasicProperties basicProperties
+        , bool persistent, int? expires)
         {
-            basicProperties.Persistent = Persistent;
+            basicProperties.Persistent = persistent;
             basicProperties.Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             basicProperties.Type = typeof(T).FullName;
-            if (Expires.HasValue)
+            if (expires.HasValue)
             {
-                basicProperties.Expiration = Expires.Value.ToString();
+                basicProperties.Expiration = expires.Value.ToString();
             }
             basicProperties.CorrelationId = Guid.NewGuid().ToString();
             basicProperties.ContentType = Config.ContentType;

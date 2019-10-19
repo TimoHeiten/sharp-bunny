@@ -6,8 +6,8 @@ namespace SharpBunny.Connect
     {
         private string _user;
         private string _password;
-        private uint _retries;
-        private uint _retryPause;
+        // private uint _retries;
+        // private uint _retryPause;
         private string _host;
         private uint _port;
         private string _vHost;
