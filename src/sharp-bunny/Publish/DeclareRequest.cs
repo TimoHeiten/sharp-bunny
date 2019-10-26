@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -17,7 +18,6 @@ namespace SharpBunny.Publish
         private readonly string _toExchange;
         private readonly string _routingKey;
         private readonly PermanentChannel _thisChannel;
-        private readonly AsyncManualResetEvent _turnstile = new AsyncManualResetEvent();
         #endregion 
 
         #region mutable fields
@@ -51,9 +51,9 @@ namespace SharpBunny.Publish
         
         public async Task<OperationResult<TResponse>> RequestAsync(TRequest request, bool force = false)
         {
-            // serialize
             var bytes = _serialize(request);
             var result = new OperationResult<TResponse>();
+            var mre = new ManualResetEvent(false);
 
             var channel = _thisChannel.Channel;
             if (force)
@@ -65,11 +65,17 @@ namespace SharpBunny.Publish
                                     arguments: null);
             }
 
+            string correlationId = Guid.NewGuid().ToString();
+
             string reply_to = _useTempQueue ? channel.QueueDeclare().QueueName : DIRECT_REPLY_TO;
-            result = await PublishAsync(channel, reply_to, bytes, result);
+            System.Console.WriteLine(reply_to);
+            result = await ConsumeAsync(channel, reply_to, result, mre, correlationId);
+
             if (result.IsSuccess)
             {
-                result = await ConsumeAsync(channel, reply_to, result);
+                result = await PublishAsync(channel, reply_to, bytes, result, correlationId);
+                System.Console.WriteLine("wait");
+                mre.WaitOne(_timeOut);
             }
 
             if (_useUniqueChannel)
@@ -80,33 +86,55 @@ namespace SharpBunny.Publish
             return result;
         }
 
-        private async Task<OperationResult<TResponse>> PublishAsync(IModel channel, string reply_to, byte[] payload
-            , OperationResult<TResponse> result)
+        private int _timeOut = 1500;
+        public IRequest<TRequest, TResponse> WithTimeOut(int timeOut)
         {
+            _timeOut = timeOut;
+            return this;
+        } 
+
+        private async Task<OperationResult<TResponse>> PublishAsync(IModel channel, string reply_to, byte[] payload
+            , OperationResult<TResponse> result, string correlationId)
+        {
+            System.Console.WriteLine("publish");
             // publish
             var props = channel.CreateBasicProperties();
             props.ReplyTo = reply_to;
-            DeclarePublisher<TRequest>.ConstructProperties(props, persistent:false, expires:500);
+            props.CorrelationId = correlationId;
+            props.Persistent = false;
+
+            DeclarePublisher<TRequest>.ConstructProperties(props, persistent: false, expires: 1500);
             try
             {
                 await Task.Run(() => 
-                    channel.BasicPublish(_toExchange, RoutingKey, mandatory: false, props, payload)
-                );
+                {
+                    channel.BasicPublish(_toExchange, RoutingKey, mandatory: false, props, payload);
+                });
+                result.IsSuccess = true;
+                result.State = OperationState.RpcPublished;
             }
             catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 result.IsSuccess = false;
                 result.Error = ex;
                 result.State = OperationState.RequestFailed;
             }
-
             return result;
         }
 
-        private async Task<OperationResult<TResponse>> ConsumeAsync(IModel channel, string reply_to, OperationResult<TResponse> result)
+        private async Task<OperationResult<TResponse>> ConsumeAsync(IModel channel, string reply_to, OperationResult<TResponse> result
+            , ManualResetEvent mre, string correlationId)
         {
-            EventHandler<BasicDeliverEventArgs> handle = (s, ea) => 
+            var consumer = new EventingBasicConsumer(channel);
+            EventHandler<BasicDeliverEventArgs> handle = null;
+            string tag = $"temp-consumer {typeof(TRequest)}-{typeof(TResponse)}-{Guid.NewGuid()}";
+
+            System.Console.WriteLine("consume");
+
+            handle = (s, ea) => 
             {
+                System.Console.WriteLine("comes into consumer callback");
                 try
                 {
                     TResponse response = _deserialize(ea.Body);
@@ -122,25 +150,33 @@ namespace SharpBunny.Publish
                 }
                 finally
                 {
-                    _turnstile.Reset();
+                    mre.Set();
+                    consumer.Received -= handle;
+                    channel.BasicCancel(tag);
+                    mre.Dispose();
                 }
             };
-            var consumer = new EventingBasicConsumer(channel);
             consumer.Received += handle;
-            string tag = $"temp-consumer {typeof(TRequest)}-{typeof(TResponse)}-{Guid.NewGuid()}";
-            await Task.Run(() => channel.BasicConsume(reply_to, 
-                                autoAck:true,
-                                consumerTag:$"temp-consumer {typeof(TRequest)}-{typeof(TResponse)}",
+
+            try
+            {
+                await Task.Run(() => channel.BasicConsume(reply_to, 
+                                autoAck: true,
+                                consumerTag: $"temp-consumer {typeof(TRequest)}-{typeof(TResponse)}",
                                 noLocal: false,
                                 exclusive: false,
                                 arguments: null,
                                 consumer: consumer));
 
-            // secure wait
-            await _turnstile.WaitAsync();
-            // dispose handler
-            consumer.Received -= handle;
-            await Task.Run(() => channel.BasicCancel(tag));
+                result.IsSuccess = true;
+                result.State = OperationState.RpcPublished;
+            }
+            catch (System.Exception ex)
+            {
+                result.IsSuccess = false;
+                result.State = OperationState.RpcReplyFailed;
+                result.Error = ex;
+            }
 
             return result;
         }
@@ -156,6 +192,7 @@ namespace SharpBunny.Publish
             string name = queue ?? typeof(TRequest).FullName;
             string rKey = routingKey ?? typeof(TRequest).FullName;
             _queueDeclare = _bunny.Setup().Queue(name).Bind(_toExchange, rKey).AsDurable();
+
             return this;
         }
 
@@ -192,7 +229,6 @@ namespace SharpBunny.Publish
             {
                 if (disposing)
                 {
-                    _turnstile.Reset();
                     _thisChannel.Dispose();
                 }
 

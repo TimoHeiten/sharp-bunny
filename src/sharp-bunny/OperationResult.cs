@@ -24,6 +24,7 @@ namespace SharpBunny
         ResponseFailed = 9,
         RpcSucceeded = 10,
         Response = 11,
-        RpcReplyFailed = 12
+        RpcReplyFailed = 12,
+        RpcPublished = 13,
     }
 }

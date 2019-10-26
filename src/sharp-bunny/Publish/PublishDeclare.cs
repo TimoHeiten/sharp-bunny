@@ -123,12 +123,12 @@ namespace SharpBunny.Publish
                         channel.ConfirmSelect();
 
                     channel.BasicPublish(_publishTo, RoutingKey, mandatory: Mandatory, properties, _serialize(msg));
-
                     if (_useConfirm)
                         channel.WaitForConfirmsOrDie();
                 });
 
                 operationResult.IsSuccess = true;
+                operationResult.State = OperationState.Published;
             }
             catch (System.Exception ex)
             {
@@ -144,6 +144,7 @@ namespace SharpBunny.Publish
                     channel?.Close();
                 }
             }
+            
             return operationResult;
         }
 

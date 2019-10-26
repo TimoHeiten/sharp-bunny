@@ -62,7 +62,7 @@ namespace tests
             IQueue queue =  bunny.Setup()
                              .Queue("constraint")
                              .MaxLength(1)
-                             .Expire(1500)
+                             .QueueExpiry(1500)
                              .Bind("amq.direct", "constraint-key")
                              .OverflowReject();
 

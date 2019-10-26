@@ -9,7 +9,7 @@ namespace SharpBunny.Utils
 {
     private volatile TaskCompletionSource<bool> _tcs = new TaskCompletionSource<bool>();
 
-    public Task WaitAsync() 
+    public Task WaitAsync()
     {
          return _tcs.Task; 
     }

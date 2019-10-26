@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using SharpBunny.Connect;
 using SharpBunny.Exceptions;
@@ -10,18 +12,20 @@ namespace SharpBunny.Consume
         where TResponse : class
     {
         public const string DIRECT_REPLY_TO = "amq.rabbitmq.reply-to";
+        private const string DEFAULT_EXCHANGE = "";
+
         #region immutable fields
         private readonly IBunny _bunny;
-        private readonly string _consumeFromQueue;
         private readonly string _rpcExchange;
+        private readonly string _consumeFromQueue;
         private readonly PermanentChannel _thisChannel;
         #endregion 
 
         #region mutable fields
+        private bool _useTempQueue;
         private bool _useUniqueChannel;
         private Func<byte[], TRequest> _deserialize;
         private Func<TResponse, byte[]> _serialize;
-        private bool _useTempQueue;
         private Func<TRequest, Task<TResponse>> _respond;
         #endregion
         public DeclareResponder(IBunny bunny, string rpcExchange, string fromQueue, Func<TRequest, Task<TResponse>> respond)
@@ -42,22 +46,23 @@ namespace SharpBunny.Consume
         public async Task<OperationResult<TResponse>> StartRespondingAsync()
         {
             var result = new OperationResult<TResponse>();
-            var publisher = _bunny.Publisher<TResponse>(_rpcExchange)
+            var publisher = _bunny.Publisher<TResponse>(DEFAULT_EXCHANGE)
                                   .WithSerialize(_serialize);
 
             if (_useUniqueChannel)
             {
-                publisher.UseUniqueChannel(true);
+                publisher.UseUniqueChannel(uniqueChannel: true);
             }
 
             Func<ICarrot<TRequest>, Task> _receiver = async carrot => 
-            {
+            {   
                 var request = carrot.Message;
                 try
                 {
                     TResponse response = await _respond(request);
-                    publisher.WithRoutingKey(carrot.MessageProperties.ReplyTo);
+                    string reply_to = carrot.MessageProperties.ReplyTo;
 
+                    publisher.WithRoutingKey(reply_to);
                     result = await publisher.SendAsync(response);
                 }
                 catch (System.Exception ex)
@@ -77,7 +82,6 @@ namespace SharpBunny.Consume
             var consumeResult = await _bunny.Consumer<TRequest>(_consumeFromQueue)
                   .DeserializeMessage(_deserialize)
                   .Callback(_receiver)
-                  .AsAutoAck()
                   .StartConsumingAsync(forceDeclare);
 
             if (consumeResult.IsSuccess)

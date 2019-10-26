@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using RabbitMQ.Client.Events;
 using SharpBunny.Connect;
@@ -30,9 +31,24 @@ namespace SharpBunny.Consume
             _receive = async carrot => await carrot.SendAckAsync();
         }
 
+        private readonly Dictionary<string, object> _arguments = new Dictionary<string, object>();
+
         public IConsume<TMsg> AsAutoAck(bool autoAck = true)
         {
             _autoAck = autoAck;
+            return this;
+        }
+
+        public IConsume<TMsg> AddTag(string tag, object value)
+        {
+            if (_arguments.ContainsKey(tag))
+            {
+                _arguments[tag] = value;
+            }
+            else
+            {
+                _arguments.Add(tag, value);
+            }
             return this;
         }
 
@@ -97,7 +113,7 @@ namespace SharpBunny.Consume
 
                     int prefetchSize = 0; // means --> no specific limit
                     bool applyToConnection = false;
-                    channel.BasicQos((uint)prefetchSize, (ushort)_prefetchCount, applyToConnection);
+                    channel.BasicQos((uint)prefetchSize, (ushort)_prefetchCount, global:applyToConnection);
 
                     _consumer = new EventingBasicConsumer(channel);
                     _consumer.ConsumerTag = Guid.NewGuid().ToString();
@@ -108,7 +124,7 @@ namespace SharpBunny.Consume
                                         _consumer.ConsumerTag,
                                         noLocal: false, 
                                         exclusive: false, 
-                                        arguments: null,
+                                        arguments: _arguments,
                                         consumer: _consumer);
                  
                     result.State = OperationState.ConsumerAttached;
@@ -143,6 +159,8 @@ namespace SharpBunny.Consume
                 };
 
                 await _receive(carrot);
+                if (_autoAck == false)
+                    await carrot.SendAckAsync();
             }
             catch (System.Exception ex)
             {

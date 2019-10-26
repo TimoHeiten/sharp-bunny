@@ -32,6 +32,8 @@ namespace SharpBunny
         Task<OperationResult<TMsg>> GetAsync(Func<ICarrot<TMsg>, Task> carrot);
 
         Task CancelAsync();
+
+        IConsume<TMsg> AddTag(string tag, object value);
     }
 
     public interface ICarrot<TMsg>

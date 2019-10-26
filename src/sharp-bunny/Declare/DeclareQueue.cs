@@ -58,6 +58,9 @@ namespace SharpBunny.Declare
             }
         }
 
+        public IQueue AddTag(string key, object value)
+        { _arguments.Add(key, value); return this; }
+
         private Task Declare(IModel channel)
         {
             return Task.Run(() => 
@@ -104,42 +107,6 @@ namespace SharpBunny.Declare
         public IQueue AsDurable()
         {
             Durable = true;
-            return this;
-        }
-
-        public IQueue WithTTL(uint ttl)
-        {
-            _arguments.Add("x-message-ttl", (int)ttl);
-            return this;
-        }
-
-        public IQueue MaxLength(uint maxLength)
-        {
-            _arguments.Add("x-max-length", (int)maxLength);
-            return this;
-        }
-
-        public IQueue MaxBytes(uint maxBytes)
-        {
-            _arguments.Add("x-max-length-bytes", (int)maxBytes);
-            return this;
-        }
-
-        public IQueue Expire(uint expire)
-        {
-            _arguments.Add("x-expires", (int)expire);
-            return this;
-        }
-
-        public IQueue AsLazy()
-        {
-            _arguments.Add("x-queue-mode", "lazy");
-            return this;
-        }
-
-        public IQueue OverflowReject()
-        {
-            _arguments.Add("x-overflow", "reject-publish");
             return this;
         }
     }

@@ -79,7 +79,7 @@ namespace BunnyTests
                             .Queue("bind-test")
                             .Bind("amq.direct", "bind-test-key")
                             .AsDurable()
-                            .Expire(1500)
+                            .QueueExpiry(1500)
                             .WithTTL(500)
                             .MaxLength(10);
 
