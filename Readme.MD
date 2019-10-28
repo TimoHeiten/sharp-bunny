@@ -64,28 +64,32 @@ If you need to access the underlying Connection use
 ```csharp
 IConnection connection = bunny.Connection;
 ```
-setup a simple Publisher
+
+# Examples:
+## Setup a simple Publisher
 ```csharp
  string defaultExchange = "";
  IBunny bunny = Bunny.ConnectSingle("amqp://guest:guest@localhost/%2F");
-            IPublish<TestMessage> publisher = bunny.Publisher<TestMessage>(defaultExchange);
+ IPublish<TestMessage> publisher = bunny.Publisher<TestMessage>(defaultExchange);
 
-            OperationResult<TestMessage> result = await publisher
-                                                    .WithQueueDeclare() // declares a queue dependent
-                                                    // on the Message Type bound to the amq.direct exchange
-                                                    .SendAsync(new TestMessage());
+ // declares a queue dependent
+ // on the Message Type bound to the amq.direct exchange
+ OperationResult<TestMessage> result = await publisher.WithQueueDeclare()
+                                                      .AsMandatory() // make sure the message is routed
+                                                      .AsPersistent() // deliveryMode=2
+                                                      .SendAsync(new TestMessage());
+ Console.WriteLine(result.IsSuccess);
+ // remove the Queue again
+ bool success = await bunny.Setup().DeleteQueueAsync(typeof(TestMessage).FullName, force: true);
 
-            bool success = await bunny.Setup().DeleteQueueAsync(typeof(TestMessage).FullName, force: true);
-
-            Assert.True(result.IsSuccess);
-            Assert.True(success);
-            bunny.Dispose();
+ bunny.Dispose();
 ```
+The publisher can be used to publish several messages. With AsUniqueChannel you can also utilize a new Channel each time.
 
 ### Declare a simple Queue bound to the amq.direct exchange
 ```csharp
  IBunny bunny = Bunny.ConnectSingle("amqp://guest:guest@localhost/%2F");
- var declare = bunny.Setup()
+ IQueue declare = bunny.Setup()
                     .Queue("bind-test")
                     .Bind("amq.direct", "bind-test-key")
                     .AsDurable()
@@ -95,6 +99,7 @@ setup a simple Publisher
 
  await declare.DeclareAsync();
 ```
+The IQueue result can be supplied to other builder interfaces. It represents the declared Queue. After the DeclareAsync, the Queue Properties cannot be changed anymore.
 
 
 Enjoy distributing your application
