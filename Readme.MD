@@ -1,4 +1,4 @@
-#SharpBunny
+# SharpBunny
 Not the RabbitMQ Library we deserve, but the one that we need 
 
 This library assumes you have at least some knowledge about how RabbitMQ works. 
@@ -10,7 +10,7 @@ If you need to learn more about RabbitMQ in general please take a look at my ude
 https://www.udemy.com/course/rabbitmq-from-start-to-finish/?referralCode=AC4E4E5264FFDC3B1A9C
 
 
-##Features:
+## Features:
 * Connect Single, Amqp Uri, parameters and Cluster support
 * Builder interfaces for all entities
   * Queues
@@ -24,7 +24,7 @@ https://www.udemy.com/course/rabbitmq-from-start-to-finish/?referralCode=AC4E4E5
 
 In general you have the following options (more in the documentation)
 
-###Connect to the Broker with
+### Connect to the Broker with
 ```csharp
 IBunny bunny = Bunny.ConnectSingle("amqp://guest:guest@localhost:5672/%2F");
 // also available with parameters instead of amqp uri
@@ -36,7 +36,7 @@ IBunny bunny = Bunny.ClusterConnect().AddNode("amqp://guest:guest@localhost:5672
                       .Connect();
 ```
 
-##Builder interfaces
+### Builder interfaces
 With a bunny (representing a single connection, that does encapsulate ConnectionRetry)
 you can access the Declarations to create your RabbitMQ Entities:
 
@@ -65,4 +65,4 @@ If you need to access the underlying Connection use
 IConnection connection = bunny.Connection;
 ```
 
-
+Enjoy distributing your application
