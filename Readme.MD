@@ -64,5 +64,37 @@ If you need to access the underlying Connection use
 ```csharp
 IConnection connection = bunny.Connection;
 ```
+setup a simple Publisher
+```csharp
+ string defaultExchange = "";
+ IBunny bunny = Bunny.ConnectSingle("amqp://guest:guest@localhost/%2F");
+            IPublish<TestMessage> publisher = bunny.Publisher<TestMessage>(defaultExchange);
+
+            OperationResult<TestMessage> result = await publisher
+                                                    .WithQueueDeclare() // declares a queue dependent
+                                                    // on the Message Type bound to the amq.direct exchange
+                                                    .SendAsync(new TestMessage());
+
+            bool success = await bunny.Setup().DeleteQueueAsync(typeof(TestMessage).FullName, force: true);
+
+            Assert.True(result.IsSuccess);
+            Assert.True(success);
+            bunny.Dispose();
+```
+
+### Declare a simple Queue bound to the amq.direct exchange
+```csharp
+ IBunny bunny = Bunny.ConnectSingle("amqp://guest:guest@localhost/%2F");
+ var declare = bunny.Setup()
+                    .Queue("bind-test")
+                    .Bind("amq.direct", "bind-test-key")
+                    .AsDurable()
+                    .QueueExpiry(1500)
+                    .WithTTL(500)
+                    .MaxLength(10);
+
+ await declare.DeclareAsync();
+```
+
 
 Enjoy distributing your application
