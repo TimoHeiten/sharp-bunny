@@ -14,5 +14,7 @@ namespace SharpBunny
         Task<OperationResult<TResponse>> RequestAsync(TRequest request, bool force = false);
         IRequest<TRequest, TResponse> DeserializeResponse(Func<byte[], TResponse> deserialize);
         IRequest<TRequest, TResponse> WithQueueDeclare(string queue=null, string exchange=null, string routingKey=null);
+
+        IRequest<TRequest, TResponse> WithTimeOut(uint timeOut);
     }
 }

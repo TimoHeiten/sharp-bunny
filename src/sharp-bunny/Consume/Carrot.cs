@@ -5,20 +5,20 @@ using SharpBunny.Connect;
 namespace SharpBunny.Consume
 {
     public class Carrot<TMsg> : ICarrot<TMsg>
+    {
+        private readonly TMsg _message;
+        private ulong _deilvered;
+        private PermanentChannel _thisChannel;
+        
+
+        public Carrot(TMsg message, ulong deilvered, PermanentChannel thisChannel)
         {
-            private readonly TMsg _message;
-            private ulong _deilvered;
-            private PermanentChannel _thisChannel;
-            
+            _message = message;
+            _deilvered = deilvered;
+            _thisChannel = thisChannel;
+        }
 
-            public Carrot(TMsg message, ulong deilvered, PermanentChannel thisChannel)
-            {
-                _message = message;
-                _deilvered = deilvered;
-                _thisChannel = thisChannel;
-            }
-
-            public TMsg Message => _message;
+        public TMsg Message => _message;
 
         public IBasicProperties MessageProperties { get; set; }
 

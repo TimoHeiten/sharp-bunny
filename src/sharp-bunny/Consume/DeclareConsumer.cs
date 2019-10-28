@@ -10,6 +10,7 @@ namespace SharpBunny.Consume
     {
         private readonly IBunny _bunny;
         private  readonly PermanentChannel _thisChannel;
+        private readonly Dictionary<string, object> _arguments = new Dictionary<string, object>();
 
         #region mutable fields
         private string _consumeFromQueue;
@@ -30,8 +31,6 @@ namespace SharpBunny.Consume
             _thisChannel = new PermanentChannel(bunny);
             _receive = async carrot => await carrot.SendAckAsync();
         }
-
-        private readonly Dictionary<string, object> _arguments = new Dictionary<string, object>();
 
         public IConsume<TMsg> AsAutoAck(bool autoAck = true)
         {

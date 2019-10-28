@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using SharpBunny.Connect;
-using SharpBunny.Utils;
 
 namespace SharpBunny.Publish
 {
@@ -87,9 +86,9 @@ namespace SharpBunny.Publish
         }
 
         private int _timeOut = 1500;
-        public IRequest<TRequest, TResponse> WithTimeOut(int timeOut)
+        public IRequest<TRequest, TResponse> WithTimeOut(uint timeOut)
         {
-            _timeOut = timeOut;
+            _timeOut = (int)timeOut;
             return this;
         } 
 
