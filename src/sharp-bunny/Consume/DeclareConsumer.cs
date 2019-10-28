@@ -163,7 +163,6 @@ namespace SharpBunny.Consume
             }
             catch (System.Exception ex)
             {
-                System.Console.WriteLine(ex);
                 if (carrot != null)
                 {
                     await carrot.SendNackAsync(withRequeue: true);

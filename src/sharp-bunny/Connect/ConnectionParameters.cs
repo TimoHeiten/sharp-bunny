@@ -2,6 +2,10 @@ using System;
 
 namespace SharpBunny
 {
+    ///<summary>
+    /// Specify Connectionparameters by using Properties.
+    /// Virtualhost defaults to '/'
+    ///</summary>
     public class ConnectionParameters : IFormattable
     {
         public string Host { get; set; }

@@ -3,6 +3,9 @@ using RabbitMQ.Client;
 
 namespace SharpBunny.Connect
 {
+    ///<summary>
+    /// Encapsulates reconnect
+    ///</summary>
     public class PermanentChannel : IDisposable
     {
         private IModel _model;
@@ -25,7 +28,6 @@ namespace SharpBunny.Connect
                  return _model;
              }
         }
-
 
         public void StartConfirmMode() => Channel.ConfirmSelect();
         private bool disposedValue = false;

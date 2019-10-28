@@ -2,6 +2,9 @@ using System;
 
 namespace SharpBunny
 {
+    ///<summary>
+    /// Indicates the Result of a Queue / Broker interaction / operation. If IsSuccess the Message is non empty, else the Error property is non empty
+    ///</summary>
     public class OperationResult<T>
     {
         public bool IsSuccess { get; internal set; }

@@ -4,6 +4,9 @@ using RabbitMQ.Client;
 
 namespace SharpBunny.Facade
 {
+    ///<summary>
+    /// Encapsulates the cluster connect
+    ///</summary>
     public class MultiBunny : IBunny
     {
         private IConnection _connection;

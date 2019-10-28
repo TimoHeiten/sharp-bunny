@@ -4,6 +4,9 @@ using RabbitMQ.Client;
 
 namespace SharpBunny.Facade
 {
+    ///<summary>
+    /// Encapsulates the single broker connect
+    ///</summary>
     public class Bunny : IBunny
     {
         private readonly ConnectionFactory _factory;

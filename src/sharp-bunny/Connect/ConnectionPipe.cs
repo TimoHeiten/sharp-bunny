@@ -68,9 +68,7 @@ namespace SharpBunny.Connect
         public string ToString(string format, IFormatProvider formatProvider)
         {
             string result = $"amqp://{_user}:{_password}@{_host}:{_port}/{_vHost}";
-            System.Console.WriteLine(result);
             return result;
-             //return $"amqp://{User}:{Password}@{Host}:{Port}/{VirtualHost}";
         }
     }
 }

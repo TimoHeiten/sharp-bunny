@@ -3,11 +3,14 @@ using System.Threading.Tasks;
 using RabbitMQ.Client.Events;
 namespace SharpBunny
 {
+    ///<summary>
+    /// Create a Publisher
+    ///</summary>
     public interface IPublish<T> : IDisposable
         where T : class
     {
         ///<summary>
-        /// ensures Publisher confirms. Specify onAck and onNack what you want to do in those events
+        /// Ensures Publisher confirms. Specify onAck and onNack what you want to do in those events
         /// , Must be not null.
         ///</summary>
         IPublish<T> WithConfirm(Func<BasicAckEventArgs, Task> onAck, Func<BasicNackEventArgs, Task> onNack);

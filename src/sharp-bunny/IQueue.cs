@@ -3,7 +3,7 @@ namespace SharpBunny
     public interface IQueue : IDeclare
     {
         ///<summary>
-        /// Defaults to Queue.Name
+        /// Defaults to Queue.Name. Is set with the Bind Method.
         ///</summary>
         string RoutingKey { get; }
         string Name { get; }
@@ -19,6 +19,9 @@ namespace SharpBunny
         /// The declared Queue will survive a Broker restart
         ///</summary>
         IQueue AsDurable();
+        ///<summary>
+        /// Add any tag and its value. Better use the extension methods for this.
+        ///</summary>
         IQueue AddTag(string tag, object value);
     }
 }

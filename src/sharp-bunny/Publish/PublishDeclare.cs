@@ -10,18 +10,14 @@ namespace SharpBunny.Publish
     public class DeclarePublisher<T> : IPublish<T>
         where T : class
     {
+        #region immutable fields
         private readonly IBunny _bunny;
-        private Func<T, byte[]> _serialize;
         private readonly PermanentChannel _thisChannel;
         private readonly string _publishTo;
-        internal DeclarePublisher(IBunny bunny, string publishTo)
-        {
-            _bunny = bunny;
-            _publishTo = publishTo;
-            _serialize = Config.Serialize;
-            _thisChannel = new PermanentChannel(bunny);
-        }
+        #endregion
 
+        #region mutable fields
+        private Func<T, byte[]> _serialize;
         private bool Mandatory { get; set; }
         private bool ConfirmActivated { get; set; }
         private bool Persistent { get; set; }
@@ -45,54 +41,20 @@ namespace SharpBunny.Publish
         private string _routingKey;
         private bool _uniqueChannel;
         private IQueue _queueDeclare;
-        private Func<BasicReturnEventArgs, Task> _returnCallback = context => Task.CompletedTask;
         private bool _useConfirm;
+        private Func<BasicReturnEventArgs, Task> _returnCallback = context => Task.CompletedTask;
         private Func<BasicAckEventArgs, Task> _ackCallback = context => Task.CompletedTask;
         private Func<BasicNackEventArgs, Task> _nackCallback = context => Task.CompletedTask;
-
-        public IPublish<T> AsMandatory(Func<BasicReturnEventArgs, Task> onReturn)
+        #endregion
+        internal DeclarePublisher(IBunny bunny, string publishTo)
         {
-            _returnCallback = onReturn;
-            Mandatory = true;
-            return this;
+            _bunny = bunny;
+            _publishTo = publishTo;
+            _serialize = Config.Serialize;
+            _thisChannel = new PermanentChannel(bunny);
         }
 
-        public IPublish<T> AsPersistent()
-        {
-            Persistent = true;
-            return this;
-        }
-
-        public IPublish<T> WithConfirm(Func<BasicAckEventArgs, Task> onAck, Func<BasicNackEventArgs, Task> onNack)
-        {
-            if (onAck == null || onNack == null )
-            {
-                throw DeclarationException.Argument(new ArgumentException("handlers for ack and nack must not be null"));
-            }
-            _useConfirm = true;
-            _ackCallback = onAck;
-            _nackCallback = onNack;
-            return this;
-        }
-
-        public IPublish<T> WithExpire(uint expire)
-        {
-            Expires = (int)expire;
-            return this;
-        }
-
-        public IPublish<T> WithSerialize(Func<T, byte[]> serialize)
-        {
-            _serialize = serialize;
-            return this;
-        }
-
-        public IPublish<T> WithRoutingKey(string routingKey)
-        {
-            _routingKey = routingKey;
-            return this;
-        }
-
+        #region Send
         public virtual async Task<OperationResult<T>> SendAsync(T msg, bool force = false)
         {
             var operationResult = new OperationResult<T>();
@@ -120,11 +82,14 @@ namespace SharpBunny.Publish
                 await Task.Run(() => 
                 {
                     if (_useConfirm)
+                    {
                         channel.ConfirmSelect();
-
+                    }
                     channel.BasicPublish(_publishTo, RoutingKey, mandatory: Mandatory, properties, _serialize(msg));
                     if (_useConfirm)
+                    {
                         channel.WaitForConfirmsOrDie();
+                    }
                 });
 
                 operationResult.IsSuccess = true;
@@ -147,13 +112,9 @@ namespace SharpBunny.Publish
             
             return operationResult;
         }
+        #endregion
 
-        public IPublish<T> UseUniqueChannel(bool uniqueChannel = true)
-        {
-            _uniqueChannel = uniqueChannel;
-            return this;
-        }
-
+        #region PublisherConfirm
         private void Handlers(IModel channel, bool dismantle = false)
         {
             if (Mandatory)
@@ -213,6 +174,57 @@ namespace SharpBunny.Publish
 
             return basicProperties;
         }
+        #endregion
+
+        #region Declarations
+        public IPublish<T> AsMandatory(Func<BasicReturnEventArgs, Task> onReturn)
+        {
+            _returnCallback = onReturn;
+            Mandatory = true;
+            return this;
+        }
+
+        public IPublish<T> AsPersistent()
+        {
+            Persistent = true;
+            return this;
+        }
+
+        public IPublish<T> WithConfirm(Func<BasicAckEventArgs, Task> onAck, Func<BasicNackEventArgs, Task> onNack)
+        {
+            if (onAck == null || onNack == null )
+            {
+                throw DeclarationException.Argument(new ArgumentException("handlers for ack and nack must not be null"));
+            }
+            _useConfirm = true;
+            _ackCallback = onAck;
+            _nackCallback = onNack;
+            return this;
+        }
+
+        public IPublish<T> WithExpire(uint expire)
+        {
+            Expires = (int)expire;
+            return this;
+        }
+
+        public IPublish<T> WithSerialize(Func<T, byte[]> serialize)
+        {
+            _serialize = serialize;
+            return this;
+        }
+
+        public IPublish<T> WithRoutingKey(string routingKey)
+        {
+            _routingKey = routingKey;
+            return this;
+        }
+
+        public IPublish<T> UseUniqueChannel(bool uniqueChannel = true)
+        {
+            _uniqueChannel = uniqueChannel;
+            return this;
+        }
 
         public IPublish<T> WithQueueDeclare(string queueName = null,string routingKey = null, string exchangeName = "amq.direct")
         {
@@ -227,11 +239,27 @@ namespace SharpBunny.Publish
             _queueDeclare = queueDeclare;
             return this;
         }
+        #endregion
 
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Handlers(_thisChannel.Channel, dismantle: true);
+                    _thisChannel.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
         public void Dispose()
         {
-            Handlers(_thisChannel.Channel, dismantle: true);
-            _thisChannel.Dispose();
+            Dispose(true);
         }
+        #endregion
     }
 }

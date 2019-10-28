@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using SharpBunny.Connect;
 using SharpBunny.Exceptions;
@@ -49,11 +47,7 @@ namespace SharpBunny.Consume
             var publisher = _bunny.Publisher<TResponse>(DEFAULT_EXCHANGE)
                                   .WithSerialize(_serialize);
 
-            if (_useUniqueChannel)
-            {
-                publisher.UseUniqueChannel(uniqueChannel: true);
-            }
-
+            publisher.UseUniqueChannel(uniqueChannel: _useUniqueChannel);
             Func<ICarrot<TRequest>, Task> _receiver = async carrot => 
             {   
                 var request = carrot.Message;
@@ -98,6 +92,7 @@ namespace SharpBunny.Consume
             return result;
         }
 
+        #region declarations
         public IRespond<TRequest, TResponse> WithSerialize(Func<TResponse, byte[]> serialize)
         {
             _serialize = serialize;
@@ -110,17 +105,13 @@ namespace SharpBunny.Consume
             return this;
         }
 
-        public IRespond<TRequest, TResponse> WithTemporaryQueue(bool useTempQueue = true)
-        {
-            _useTempQueue = useTempQueue;
-            return this;
-        }
 
         public IRespond<TRequest, TResponse> WithUniqueChannel(bool useUniqueChannel = true)
         {
             _useUniqueChannel = useUniqueChannel;
             return this;
         }
+        #endregion
 
         #region IDisposable Support
         private bool disposedValue = false;

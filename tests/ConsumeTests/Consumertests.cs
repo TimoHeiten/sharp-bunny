@@ -121,7 +121,6 @@ namespace tests
                 var result = await carrot.SendNackAsync(withRequeue:true);
                 Assert.Equal(OperationState.Nacked, result.State);
                 uint count = bunny.Channel().MessageCount(nackReQueue);
-                System.Console.WriteLine($"messages:{count}");
                 Assert.Equal((uint)1, count);
             });
             SetupAndPublish(bunny, nackReQueue);

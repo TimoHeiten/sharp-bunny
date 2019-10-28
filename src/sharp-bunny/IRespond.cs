@@ -3,11 +3,15 @@ using System.Threading.Tasks;
 
 namespace SharpBunny
 {
+    ///<summary>
+    /// Responder for Rpc call.
+    ///</summary>
     public interface IRespond<TRequest, TResponse> : IDisposable
     { 
         ///<summary>
         /// StartsResponding asynchronously to the specified Request. Make sure to have a matching IRequest on the other side.
-        /// Be aware of changing the defaults (with regards to queue naming etc.)--> apply on both sides
+        /// Be aware of changing the defaults (with regards to queue naming etc.)--> apply on both sides.
+        /// A Queue is declared that is equal to the Request name, or the provided fromQueue name on creation.
         ///</summary>
         Task<OperationResult<TResponse>> StartRespondingAsync();
         ///<summary>

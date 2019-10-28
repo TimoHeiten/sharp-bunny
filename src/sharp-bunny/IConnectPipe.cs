@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SharpBunny
 {
@@ -9,7 +7,7 @@ namespace SharpBunny
     //                    .WithPlain(guest, guest)
     ///<summary>
     /// Use to configure the Connection parameters in a fluent manner. Nothing configured evaluates to 
-    /// default values
+    /// default values. Supports only plain auth.
     ///</summary>
     public interface IConnectPipe : IFormattable
     {

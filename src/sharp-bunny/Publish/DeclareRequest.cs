@@ -20,6 +20,7 @@ namespace SharpBunny.Publish
         #endregion 
 
         #region mutable fields
+        private int _timeOut = 1500;
         private Func<byte[], TResponse> _deserialize;
         private Func<TRequest, byte[]> _serialize;
         private bool _useTempQueue;
@@ -67,13 +68,11 @@ namespace SharpBunny.Publish
             string correlationId = Guid.NewGuid().ToString();
 
             string reply_to = _useTempQueue ? channel.QueueDeclare().QueueName : DIRECT_REPLY_TO;
-            System.Console.WriteLine(reply_to);
             result = await ConsumeAsync(channel, reply_to, result, mre, correlationId);
 
             if (result.IsSuccess)
             {
                 result = await PublishAsync(channel, reply_to, bytes, result, correlationId);
-                System.Console.WriteLine("wait");
                 mre.WaitOne(_timeOut);
             }
 
@@ -85,7 +84,6 @@ namespace SharpBunny.Publish
             return result;
         }
 
-        private int _timeOut = 1500;
         public IRequest<TRequest, TResponse> WithTimeOut(uint timeOut)
         {
             _timeOut = (int)timeOut;
@@ -95,7 +93,6 @@ namespace SharpBunny.Publish
         private async Task<OperationResult<TResponse>> PublishAsync(IModel channel, string reply_to, byte[] payload
             , OperationResult<TResponse> result, string correlationId)
         {
-            System.Console.WriteLine("publish");
             // publish
             var props = channel.CreateBasicProperties();
             props.ReplyTo = reply_to;
@@ -114,7 +111,6 @@ namespace SharpBunny.Publish
             }
             catch (System.Exception ex)
             {
-                System.Console.WriteLine(ex);
                 result.IsSuccess = false;
                 result.Error = ex;
                 result.State = OperationState.RequestFailed;
@@ -129,11 +125,8 @@ namespace SharpBunny.Publish
             EventHandler<BasicDeliverEventArgs> handle = null;
             string tag = $"temp-consumer {typeof(TRequest)}-{typeof(TResponse)}-{Guid.NewGuid()}";
 
-            System.Console.WriteLine("consume");
-
             handle = (s, ea) => 
             {
-                System.Console.WriteLine("comes into consumer callback");
                 try
                 {
                     TResponse response = _deserialize(ea.Body);

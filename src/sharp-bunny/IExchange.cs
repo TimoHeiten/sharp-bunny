@@ -1,5 +1,8 @@
 namespace SharpBunny
 {
+    ///<summary>
+    /// Exchange Entity of RabbitMQ
+    ///</summary>
     public interface IExchange : IDeclare
     {
         string Name { get; }
@@ -11,9 +14,12 @@ namespace SharpBunny
         /// Durable Exchanges will survive a broker restart
         ///</summary>
         IExchange AsDurable();
+        ///<summary>
+        /// Define an Exchange as Internal
+        ///</summary>
         IExchange Internal();
         ///<summary>
-        /// non routeable messages will be sent to this alternate exchange
+        /// Non routeable messages will be sent to this alternate exchange
         ///</summary>
         IExchange AlternateExchange(string alternate);
     }

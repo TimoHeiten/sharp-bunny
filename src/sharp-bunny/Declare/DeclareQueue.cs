@@ -12,12 +12,12 @@ namespace SharpBunny.Declare
     public class DeclareQueue : IQueue
     {
         public IBunny Bunny { get; set; }
+        public string Name { get; }
         internal DeclareQueue(IBunny bunny, string name)
         { 
             Name = name;
             Bunny = bunny;
         }
-        public string Name { get; }
         internal bool? Durable { get; set; } = false;
         internal (string ex, string rKey)? BindingKey { get; set; }
         public string RoutingKey 
@@ -32,9 +32,13 @@ namespace SharpBunny.Declare
         }
         internal bool? AutoDelete { get; set; }
         private readonly Dictionary<string, object> _arguments = new Dictionary<string, object>();
-
+        private bool _wasDeclared;
         public async Task DeclareAsync()
         {
+            if (_wasDeclared)
+            {
+                return;
+            }
             bool exists = await Bunny.QueueExistsAsync(Name);
             if (exists)
             {
@@ -55,11 +59,15 @@ namespace SharpBunny.Declare
             finally
             {
                 channel.Close();
+                _wasDeclared = true;
             }
         }
 
         public IQueue AddTag(string key, object value)
-        { _arguments.Add(key, value); return this; }
+        {
+             _arguments.Add(key, value);
+              return this; 
+        }
 
         private Task Declare(IModel channel)
         {
