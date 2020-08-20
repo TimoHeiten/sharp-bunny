@@ -6,28 +6,28 @@ namespace SharpBunny.Consume
 {
     public class Carrot<TMsg> : ICarrot<TMsg>
     {
-        private readonly TMsg _message;
-        private readonly ulong _deilvered;
         private readonly PermanentChannel _thisChannel;
 
-        public Carrot(TMsg message, ulong deilvered, PermanentChannel thisChannel)
+        public Carrot(TMsg message, ulong deliveryTag, PermanentChannel thisChannel)
         {
-            _message = message;
-            _deilvered = deilvered;
+            Message = message;
+            DeliveryTag = deliveryTag;
             _thisChannel = thisChannel;
         }
 
-        public TMsg Message => _message;
+        public TMsg Message { get; }
+        
+        public ulong DeliveryTag { get; }
 
         public IBasicProperties MessageProperties { get; set; }
 
-        public async Task<OperationResult<TMsg>> SendAckAsync()
+        public async Task<OperationResult<TMsg>> SendAckAsync(bool multiple = false)
             {
                 var result = new OperationResult<TMsg>();
                 try
                 {
                     await Task.Run(() => 
-                                    _thisChannel.Channel.BasicAck(_deilvered, multiple: false)
+                                    _thisChannel.Channel.BasicAck(DeliveryTag, multiple: multiple)
                     );
                     result.IsSuccess = true;
                     result.State = OperationState.Acked;
@@ -43,13 +43,13 @@ namespace SharpBunny.Consume
                 return result;
             }
 
-            public async Task<OperationResult<TMsg>> SendNackAsync(bool withRequeue = true)
+            public async Task<OperationResult<TMsg>> SendNackAsync(bool multiple = false, bool withRequeue = true)
             {
                 var result = new OperationResult<TMsg>();
                 try
                 {
                     await Task.Run(() => 
-                                    _thisChannel.Channel.BasicReject(_deilvered, requeue: withRequeue)
+                                    _thisChannel.Channel.BasicNack(DeliveryTag, multiple: multiple, requeue: withRequeue)
                     );
                     result.IsSuccess = true;
                     result.State = OperationState.Nacked;

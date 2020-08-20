@@ -17,6 +17,8 @@ namespace SharpBunny.Consume
         private EventingBasicConsumer _consumer;
         private bool _useUniqueChannel;
         private Func<ICarrot<TMsg>, Task> _receive;
+        private Func<ICarrot<TMsg>, Task> _ackBehaviour;
+        private Func<ICarrot<TMsg>, Task> _nackBehaviour;
         private Func<byte[], TMsg> _deserialize;
         private bool _autoAck = false;
 
@@ -30,11 +32,26 @@ namespace SharpBunny.Consume
             _consumeFromQueue = fromQueue;
             _thisChannel = new PermanentChannel(bunny);
             _receive = async carrot => await carrot.SendAckAsync();
+            _ackBehaviour = async carrot => await carrot.SendAckAsync();
+            _nackBehaviour = async carrot => await carrot.SendNackAsync(withRequeue: true);
         }
 
         public IConsume<TMsg> AsAutoAck(bool autoAck = true)
         {
             _autoAck = autoAck;
+            return this;
+        }
+
+        public IConsume<TMsg> AckBehaviour(Func<ICarrot<TMsg>, Task> ackBehaviour)
+        {
+            _autoAck = false;
+            _ackBehaviour = ackBehaviour;
+            return this;
+        }
+
+        public IConsume<TMsg> NackBehaviour(Func<ICarrot<TMsg>, Task> nackBehaviour)
+        {
+            _nackBehaviour = nackBehaviour;
             return this;
         }
 
@@ -159,13 +176,13 @@ namespace SharpBunny.Consume
 
                 await _receive(carrot);
                 if (_autoAck == false)
-                    await carrot.SendAckAsync();
+                    await _ackBehaviour(carrot);
             }
             catch (System.Exception ex)
             {
                 if (carrot != null)
                 {
-                    await carrot.SendNackAsync(withRequeue: true);
+                    await _nackBehaviour(carrot);
                 }
             }
         }
