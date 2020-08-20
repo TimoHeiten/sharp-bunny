@@ -21,7 +21,7 @@ namespace SharpBunny.Publish
 
         #region mutable fields
         private int _timeOut = 1500;
-        private Func<byte[], TResponse> _deserialize;
+        private Func<ReadOnlyMemory<byte>, TResponse> _deserialize;
         private Func<TRequest, byte[]> _serialize;
         private bool _useTempQueue;
         private bool _useUniqueChannel;
@@ -200,7 +200,7 @@ namespace SharpBunny.Publish
             return this;
         }
 
-        public IRequest<TRequest, TResponse> DeserializeResponse(Func<byte[], TResponse> deserialize)
+        public IRequest<TRequest, TResponse> DeserializeResponse(Func<ReadOnlyMemory<byte>, TResponse> deserialize)
         {
             _deserialize = deserialize;
             return this;

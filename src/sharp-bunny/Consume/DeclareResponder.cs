@@ -22,7 +22,7 @@ namespace SharpBunny.Consume
         #region mutable fields
         private bool _useTempQueue;
         private bool _useUniqueChannel;
-        private Func<byte[], TRequest> _deserialize;
+        private Func<ReadOnlyMemory<byte>, TRequest> _deserialize;
         private Func<TResponse, byte[]> _serialize;
         private Func<TRequest, Task<TResponse>> _respond;
         #endregion
@@ -99,7 +99,7 @@ namespace SharpBunny.Consume
             return this;
         }
 
-        public IRespond<TRequest, TResponse> WithDeserialize(Func<byte[], TRequest> deserialize)
+        public IRespond<TRequest, TResponse> WithDeserialize(Func<ReadOnlyMemory<byte>, TRequest> deserialize)
         {
             _deserialize = deserialize;
             return this;

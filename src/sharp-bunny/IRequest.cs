@@ -33,7 +33,7 @@ namespace SharpBunny
         ///<summary>
         /// Specify a Deserialize function
         ///</summary>
-        IRequest<TRequest, TResponse> DeserializeResponse(Func<byte[], TResponse> deserialize);
+        IRequest<TRequest, TResponse> DeserializeResponse(Func<ReadOnlyMemory<byte>, TResponse> deserialize);
         ///<summary>
         /// Force a Queue declare before sending.
         ///</summary>

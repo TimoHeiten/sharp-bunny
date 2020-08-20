@@ -17,7 +17,7 @@ namespace SharpBunny.Consume
         private EventingBasicConsumer _consumer;
         private bool _useUniqueChannel;
         private Func<ICarrot<TMsg>, Task> _receive;
-        private Func<byte[], TMsg> _deserialize;
+        private Func<ReadOnlyMemory<byte>, TMsg> _deserialize;
         private bool _autoAck = false;
 
         private uint _prefetchCount = 50;
@@ -115,12 +115,12 @@ namespace SharpBunny.Consume
                     channel.BasicQos((uint)prefetchSize, (ushort)_prefetchCount, global:applyToConnection);
 
                     _consumer = new EventingBasicConsumer(channel);
-                    _consumer.ConsumerTag = Guid.NewGuid().ToString();
+                    var consumerTag = Guid.NewGuid().ToString();
                     _consumer.Received += HandleReceived;
 
                     channel.BasicConsume(_consumeFromQueue, 
                                         _autoAck, 
-                                        _consumer.ConsumerTag,
+                                        consumerTag,
                                         noLocal: false, 
                                         exclusive: false, 
                                         arguments: _arguments,
@@ -187,7 +187,10 @@ namespace SharpBunny.Consume
                 {
                     if (_consumer != null)
                     {
-                        _thisChannel.Channel.BasicCancel(_consumer.ConsumerTag);
+                        foreach (var consumerTag in _consumer.ConsumerTags)
+                        {
+                          _thisChannel.Channel.BasicCancel(consumerTag);
+                        }
                         _consumer.Received -= HandleReceived;
                     }
                     _thisChannel.Dispose();
@@ -200,7 +203,7 @@ namespace SharpBunny.Consume
             Dispose(true);
         }
 
-        public IConsume<TMsg> DeserializeMessage(Func<byte[], TMsg> deserialize)
+        public IConsume<TMsg> DeserializeMessage(Func<ReadOnlyMemory<byte>, TMsg> deserialize)
         {
             _deserialize = deserialize;
             return this;
