@@ -6,18 +6,17 @@ namespace SharpBunny.Consume
 {
     public class Carrot<TMsg> : ICarrot<TMsg>
     {
-        private readonly TMsg _message;
         private readonly ulong _deilvered;
         private readonly PermanentChannel _thisChannel;
 
         public Carrot(TMsg message, ulong deilvered, PermanentChannel thisChannel)
         {
-            _message = message;
+            Message = message;
             _deilvered = deilvered;
             _thisChannel = thisChannel;
         }
 
-        public TMsg Message => _message;
+        public TMsg Message { get; }
 
         public IBasicProperties MessageProperties { get; set; }
 
