@@ -21,13 +21,13 @@ namespace SharpBunny.Consume
 
         public IBasicProperties MessageProperties { get; set; }
 
-        public async Task<OperationResult<TMsg>> SendAckAsync()
+        public async Task<OperationResult<TMsg>> SendAckAsync(bool multiple = false)
             {
                 var result = new OperationResult<TMsg>();
                 try
                 {
                     await Task.Run(() => 
-                                    _thisChannel.Channel.BasicAck(DeliveryTag, multiple: false)
+                                    _thisChannel.Channel.BasicAck(DeliveryTag, multiple: multiple)
                     );
                     result.IsSuccess = true;
                     result.State = OperationState.Acked;
@@ -43,13 +43,13 @@ namespace SharpBunny.Consume
                 return result;
             }
 
-            public async Task<OperationResult<TMsg>> SendNackAsync(bool withRequeue = true)
+            public async Task<OperationResult<TMsg>> SendNackAsync(bool multiple = false, bool withRequeue = true)
             {
                 var result = new OperationResult<TMsg>();
                 try
                 {
                     await Task.Run(() => 
-                                    _thisChannel.Channel.BasicReject(DeliveryTag, requeue: withRequeue)
+                                    _thisChannel.Channel.BasicNack(DeliveryTag, multiple: multiple, requeue: withRequeue)
                     );
                     result.IsSuccess = true;
                     result.State = OperationState.Nacked;

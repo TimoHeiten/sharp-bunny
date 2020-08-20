@@ -55,7 +55,7 @@ namespace SharpBunny
         ulong DeliveryTag { get; }
         TMsg Message { get; }
         IBasicProperties MessageProperties { get; }
-        Task<OperationResult<TMsg>> SendAckAsync();
-        Task<OperationResult<TMsg>> SendNackAsync(bool withRequeue = true);
+        Task<OperationResult<TMsg>> SendAckAsync(bool multiple = false);
+        Task<OperationResult<TMsg>> SendNackAsync(bool multiple = false, bool withRequeue = true);
     }
 }
