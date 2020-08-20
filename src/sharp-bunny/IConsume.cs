@@ -25,6 +25,17 @@ namespace SharpBunny
         /// Define the consumer as auto acknowledgement for best possible performance, yet least message reliability.
         ///</summary>
         IConsume<TMsg> AsAutoAck(bool autoAck = true);
+
+        ///<summary>
+        /// Define custom behaviour for acknowledging messages. Will automatically turn off auto acknowledgement.
+        ///</summary>
+        IConsume<TMsg> AckBehaviour(Func<ICarrot<TMsg>, Task> ackBehaviour);
+
+        ///<summary>
+        /// Define custom behaviour for rejecting messages when acknowledging failed.
+        ///</summary>
+        IConsume<TMsg> NackBehaviour(Func<ICarrot<TMsg>, Task> nackBehaviour);
+
         ///<summary>
         /// Specify your own Desiarilze function for deserializing the message. Default is Json.
         ///</summary>
