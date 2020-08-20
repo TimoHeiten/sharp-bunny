@@ -1,4 +1,4 @@
-using System.IO;
+using System;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -14,9 +14,9 @@ namespace SharpBunny
             return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(msg));
         }
 
-        internal static T Deserialize<T>(byte[] arg)
+        internal static T Deserialize<T>(ReadOnlyMemory<byte> arg)
         {
-            string decoded = Encoding.UTF8.GetString(arg);
+            string decoded = Encoding.UTF8.GetString(arg.Span);
             return JsonConvert.DeserializeObject<T>(decoded);
         }
     }

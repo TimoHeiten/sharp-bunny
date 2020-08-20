@@ -28,7 +28,7 @@ namespace SharpBunny
         ///<summary>
         /// Specify your own Desiarilze function for deserializing the message. Default is Json.
         ///</summary>
-        IConsume<TMsg> DeserializeMessage(Func<byte[], TMsg> deserialize);
+        IConsume<TMsg> DeserializeMessage(Func<ReadOnlyMemory<byte>, TMsg> deserialize);
 
         ///<summary>
         /// Starts consuming from the specified or forceDeclared Queue

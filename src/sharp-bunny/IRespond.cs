@@ -21,7 +21,7 @@ namespace SharpBunny
         ///<summary>
         /// Override Deserialize method
         ///</summary>
-        IRespond<TRequest, TResponse> WithDeserialize(Func<byte[], TRequest> deserialize);
+        IRespond<TRequest, TResponse> WithDeserialize(Func<ReadOnlyMemory<byte>, TRequest> deserialize);
         ///<summary>
         /// If applied, uses a new channel for each Response (publish with reply_to tag)
         ///</summary>
