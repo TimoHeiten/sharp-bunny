@@ -6,17 +6,18 @@ namespace SharpBunny.Consume
 {
     public class Carrot<TMsg> : ICarrot<TMsg>
     {
-        private readonly ulong _deilvered;
         private readonly PermanentChannel _thisChannel;
 
-        public Carrot(TMsg message, ulong deilvered, PermanentChannel thisChannel)
+        public Carrot(TMsg message, ulong deliveryTag, PermanentChannel thisChannel)
         {
             Message = message;
-            _deilvered = deilvered;
+            DeliveryTag = deliveryTag;
             _thisChannel = thisChannel;
         }
 
         public TMsg Message { get; }
+        
+        public ulong DeliveryTag { get; }
 
         public IBasicProperties MessageProperties { get; set; }
 
@@ -26,7 +27,7 @@ namespace SharpBunny.Consume
                 try
                 {
                     await Task.Run(() => 
-                                    _thisChannel.Channel.BasicAck(_deilvered, multiple: false)
+                                    _thisChannel.Channel.BasicAck(DeliveryTag, multiple: false)
                     );
                     result.IsSuccess = true;
                     result.State = OperationState.Acked;
@@ -48,7 +49,7 @@ namespace SharpBunny.Consume
                 try
                 {
                     await Task.Run(() => 
-                                    _thisChannel.Channel.BasicReject(_deilvered, requeue: withRequeue)
+                                    _thisChannel.Channel.BasicReject(DeliveryTag, requeue: withRequeue)
                     );
                     result.IsSuccess = true;
                     result.State = OperationState.Nacked;

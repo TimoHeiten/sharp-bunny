@@ -52,6 +52,7 @@ namespace SharpBunny
     ///</summary>
     public interface ICarrot<TMsg>
     {
+        ulong DeliveryTag { get; }
         TMsg Message { get; }
         IBasicProperties MessageProperties { get; }
         Task<OperationResult<TMsg>> SendAckAsync();
